@@ -1,0 +1,539 @@
+---
+title: "IM3 Run Analysis"
+author: "Created by: `r Sys.info()['user']`"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: 
+  html_document: 
+    css: custom.css
+    toc: yes
+---
+
+```{r setOptions, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Set up default options for chunks, turn off error or warning messages.
+knitr::opts_chunk$set(echo=FALSE, comment=NA, warning=FALSE, message=FALSE, include=TRUE,
+                      fig.path='//nrelqnap02/plexos/projects/im3/run results/plots/', dev='png', fig.width=18)
+
+library(data.table)
+library(ggplot2)
+library(plyr)
+library(knitr)
+library(rplexos)
+
+fig.height.gen.types = 8
+fig.height.reserves = 8
+fig.height.duration = 8
+element.text.size = 12
+
+plot.theme = theme_bw() + 
+  theme(axis.text.x = element_text(angle = -30, hjust=0, size=element.text.size),
+        axis.title = element_text(size = 16),
+        axis.text.y = element_text(size = 15),
+        strip.text.x = element_text(size = 20),
+        strip.text.y = element_text(size = 20),
+        legend.text = element_text(size = 20) ) 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Total Generation Cost with Penalties
+```{r total-gen-cost-penalties}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# ggplot(data = annual.gen.stats) +
+#   geom_col(aes(x=Scenario, y=`Total Cost ($)`, colour='gray25'), show.legend=FALSE) +
+#   # scale_fill_manual('', values = fuel.color) +
+#   ylab('Generation Cost ($)') + xlab('Scenario') +
+#   plot.theme
+
+ggplot(data = annual.gen.stats) +
+  geom_col(aes(x=Scenario, y=`Total Cost ($)`, fill=Scenario, colour='black'), show.legend=FALSE) +
+  scale_fill_manual('', values = fuel.color) +
+  ylab('Generation Cost ($)') + xlab('Scenario') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Total Generation Cost without Penalties
+```{r total-gen-cost}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# ggplot(data = annual.gen.stats) +
+#   geom_col(aes(x=Scenario, y=`Cost ($)`, colour='gray25'), show.legend=FALSE) +
+#   # scale_fill_manual('', values = scenario.color) +
+#   ylab('Generation Cost ($)') + xlab('Scenario') +
+#   plot.theme
+
+ggplot(data = annual.gen.stats) +
+  geom_col(aes(x=Scenario, y=`Cost ($)`, fill=Scenario, colour='black'), show.legend=FALSE) +
+  scale_fill_manual('', values = fuel.color) +
+  ylab('Generation Cost ($)') + xlab('Scenario') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+
+***
+## Average Region Energy Price
+```{r energy-price}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+avg.prices.regions$Scenario = factor(avg.prices.regions$Scenario, levels = plotting.order)
+
+# ggplot(data = avg.prices) +
+#   geom_col(aes(x=Scenario, y=`Price  ($/MWh)`, color='gray25'), show.legend=FALSE) +
+#   xlab('Scenario') + ylab('Avg Energy Price ($/MWh)') +
+#   # scale_fill_manual('', values = scenario.color) +
+#   plot.theme
+
+ggplot(data = avg.prices.regions) +
+  geom_col(aes(x=Scenario, y=`Price  ($/MWh)`, fill=Scenario, colour='black'), show.legend=FALSE) +
+  xlab('Scenario') + ylab('Avg Energy Price ($/MWh)') +
+  scale_fill_manual('', values = fuel.color) +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Average Zone Energy Price
+```{r zone-energy-price}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+avg.prices.zones$Scenario = factor(avg.prices.zones$Scenario, levels = plotting.order)
+
+# ggplot(data = avg.zone.price) +
+#   geom_col(aes(x=Scenario, y=`Price  ($/MWh)`, color='gray25'), show.legend=FALSE) +
+#   xlab('Scenario') + ylab('Avg Energy Price ($/MWh)') +
+#   # scale_fill_manual('', values = scenario.color) +
+#   plot.theme
+
+ggplot(data = avg.prices.zones) +
+  geom_col(aes(x=Scenario, y=`Price  ($/MWh)`, fill=Scenario, colour='black'), show.legend=FALSE) +
+  xlab('Scenario') + ylab('Avg Energy Price ($/MWh)') +
+  scale_fill_manual('', values = fuel.color) +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+<!-- *** -->
+<!-- ## Average BA Energy Price -->
+<!-- ```{r ba-energy-price} -->
+<!-- # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+<!-- region.names = unique(region.price$region) -->
+
+<!-- for ( i in region.names) { -->
+<!--   p = ggplot(data = region.price[region==i,]) + -->
+<!--     geom_col(aes(x=Scenario, y=value, fill=Scenario, colour='black'), show.legend=FALSE) + -->
+<!--     xlab('Scenario') + ylab('Avg BA Energy Price ($/MWh)') + -->
+<!--     scale_fill_manual('', values = fuel.color) + -->
+<!--     plot.theme  -->
+<!--   print(i) -->
+<!--   print(p) -->
+<!-- } -->
+<!-- # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+<!-- ``` -->
+
+***
+## Average TEPPC Region Energy Price
+```{r teppc-energy-price}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+region.names = unique(region.price.teppc$TEPPC.Region)
+
+for ( i in region.names) {
+  p = ggplot(data = region.price.teppc[TEPPC.Region==i,]) +
+    geom_col(aes(x=Scenario, y=value, fill=Scenario, colour='black'), show.legend=FALSE) +
+    xlab('Scenario') + ylab('Avg BA Energy Price ($/MWh)') +
+    scale_fill_manual('', values = fuel.color) +
+    plot.theme 
+  print(i)
+  print(p)
+}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Hours with High Price
+```{r high-price}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+hours.high.price$Scenario = factor(hours.high.price$Scenario, levels = plotting.order)
+
+ggplot(data = hours.high.price) +
+  geom_col(aes(x=Scenario, y=`# Hours over 100 $/MWh`, color='gray25'), show.legend=FALSE) +
+  xlab('Scenario') + ylab('Hours with High Price') +
+  # scale_fill_manual('', values = scenario.color) +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Unserved Energy
+```{r violations-energy}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+violations$Scenario = factor(violations$Scenario, levels = plotting.order)
+
+ggplot(data = violations) +
+  geom_col(aes(x=Scenario, y=`Unserved Energy (MWh)`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('Unserved Energy (MWh)') +
+  plot.theme
+
+ggplot(data = violations) +
+  geom_col(aes(x=Scenario, y=`Hours with Unserved Energy`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('Hours with Unserved Energy') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Line Flow Violation
+```{r violations-line-flow}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ggplot(data = violations) +
+  geom_col(aes(x=Scenario, y=`Line Flow Violation (MWh)`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('Line Flow Violation (MWh)') +
+  plot.theme
+
+ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Hours with Line Flow Violation`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('Hours with Line Flow Violation') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Reserve Shortage
+```{r violations-reserve}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Reserve Shortage (MWh)`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('Reserve Shortage (MWh)') +
+  plot.theme
+
+ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Hours with reserve shortage`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('Hours with reserve shortage') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Hydro Violation
+```{r violations-hydro}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Hydro Energy Violation (kWh)`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('Hydro Energy Violation (kWh)') +
+  plot.theme
+
+ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Hours with Hydro Violation`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('Hours with Hydro Violation') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Line Congestion
+```{r line-congestion}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = annual.gen.stats) + geom_col(aes(x=Scenario, y=`# Congested Lines`, color='gray25'), show.legend = FALSE) +
+  # scale_fill_manual('', values = scenario.color) +
+  xlab('Scenario') + ylab('# of Congested Lines') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Penalty Costs
+```{r penalty-costs}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+penalty$Scenario = factor(penalty$Scenario, levels = plotting.order)
+
+ggplot(data = penalty) + geom_bar(aes(x=Scenario, y=cost, fill=violation), position='stack', stat='identity') +
+  xlab('Scenario') + ylab('Penalty Cost ($)') +
+  plot.theme +
+  guides(fill=guide_legend(title='Type'))
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Coal and Natural Gas Offtake
+```{r fuel-offtake}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = fuel.offtake) + geom_bar(aes(x=Scenario, y=value, fill=type), position='stack', stat='identity') +
+  xlab('Scenario') + ylab('Fuel Offtake (GBtu)') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Total Curtailment
+```{r total-curtailment}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = annual.gen.stats) + geom_col(aes(x=Scenario, y=`Curtailment (GWh)`, color='gray25'), show.legend = FALSE) +
+  ylab('Curtailment GWh') + scale_fill_manual('', values = scenario.color) + xlab('Scenario') +
+  plot.theme
+
+ggplot(data = annual.gen.stats) + geom_col(aes(x=Scenario, y=`Curtailment %`, color='gray25'), show.legend = FALSE) +
+  xlab('Scenario') + ylab('Curtailment %') + scale_fill_manual('', values = scenario.color) +
+  plot.theme
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Generation Percent by Type
+```{r generation-percent, fig.height=fig.height.gen.types}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = gen.by.type) + geom_bar(aes(x=Scenario, y=value, fill=type), position='stack', stat='identity') +
+  scale_fill_manual('', values = gen.color) +
+  xlab('Scenario') +
+  ylab('Gen (% of load)') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Generation by Type and Region
+```{r generation-type-region, fig.height=fig.height.gen.types*3, fig.width=18}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = gen.type.region[!TEPPC.Region %in% c('Canada', 'Mexico'),]) +
+  geom_bar(aes(x=Scenario, y=value, fill=Type), position='stack', stat='identity') +
+  geom_errorbar(data = annual.load[!TEPPC.Region %in% c('Canada', 'Mexico')], aes(x = Scenario, ymin=value, ymax=value, color='grey20'),
+                            size=0.65, linetype='longdash') +
+  scale_fill_manual('', values = gen.color) +
+  scale_color_manual('', values = c('grey20'), labels=c('Load'))+
+  xlab('Scenario') +
+  ylab('Gen (GWh)') +
+  facet_grid(TEPPC.Region~., scales='free_y') +
+  plot.theme
+
+# # This code was used for the AGU presentation plots I made
+# gen.type.region$TEPPC.Region = factor(gen.type.region$TEPPC.Region, levels = c('Basin', 'Southern California', 'Southwest', 'Northwest', 'Canada',
+#                                                                                'Northern California', 'Rockies', 'Mexico'))
+# ggplot(data = gen.type.region[TEPPC.Region %in% c('Basin', 'Southern California', 'Southwest', 'Northwest'),]) + geom_bar(aes(x=Scenario, y=value, fill=Type), position='stack', stat='identity') +
+#   scale_fill_manual('', values = gen.color) +
+#   xlab('Scenario') +
+#   ylab('Gen (GWh)') +
+#   facet_grid(TEPPC.Region~., scales='free_y') +
+#   theme_bw() +
+#   theme(axis.text.x = element_text(angle = -30, hjust=0, size=16),
+#         axis.title = element_text(size = 20),
+#         axis.text.y = element_text(size = 20),
+#         strip.text.x = element_text(size = 20),
+#         strip.text.y = element_text(size = 20),
+#         legend.text = element_text(size = 18) )
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Capacity Factor
+```{r capacity-factor, fig.height=fig.height.gen.types}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = capacity.factor) + geom_bar(aes(x=Scenario, y=value, fill=type), position='stack', stat='identity') +
+  scale_fill_manual('', values = gen.color) +
+  xlab('Scenario') +
+  ylab('Capacity Factor (%)') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## % Reserves of Reserves+Generation
+```{r reserve-percent, fig.height=fig.height.gen.types}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = reserve.generation.percent) + geom_bar(aes(x=Scenario, y=value, fill=type), position='stack', stat='identity') +
+  scale_fill_manual('', values = gen.color) +
+  xlab('Scenario') +
+  ylab('% Reserve of Reserve+Gen') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Reserve Provision by Type
+```{r reserve-provision, fig.height=fig.height.gen.types}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = reserve.provision) + geom_bar(aes(x=Scenario, y=value, fill=type), position='stack', stat='identity') +
+  scale_fill_manual('', values = gen.color) +
+  xlab('Scenario') +
+  ylab('Reserve Provison (GWh)') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Reserve Provision by Type and Region
+```{r reserve-provision-region, fig.height=fig.height.gen.types*8}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = reserve.provision.region) + geom_bar(aes(x=Scenario, y=value, fill=Type), position='stack', stat='identity') +
+  scale_fill_manual('', values = gen.color) +
+  xlab('Scenario') +
+  ylab('Reserve Provison (GWh)') +
+  facet_grid(TEPPC.Region~., scales='free_y') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+***
+## Imports and Exports by Region
+```{r imports-exports-region, fig.height=fig.height.gen.types*8}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = imports.exports) +
+  # geom_bar(aes(x=Scenario, y=Net.Exports, colour='black'), position='dodge', stat='identity') +
+  geom_col(aes(x=Scenario, y=Net.Exports, fill=Scenario, colour='black'), show.legend=FALSE) +
+  scale_fill_manual('', values = fuel.color) +
+  # scale_fill_manual('', values = gen.color) +
+  xlab('Imports/Exports') +
+  ylab('Net Exports (GWh)') +
+  facet_grid(TEPPC.Region~., scales='free_y') +
+  plot.theme
+
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+```
+
+
+***
+## Energy Price Duration Curve
+```{r energy-price-duration, fig.height=fig.height.duration}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = prices[Scenario %in% scenarios, ]) +
+  geom_line(aes(x=interval, y=Cost, color = Scenario), size=1) +
+  scale_y_continuous(limits = c(0, 300)) +
+  scale_color_manual('', values = scenario.color) +
+  xlab('Hours of Year') + ylab('Energy Price ($/MWh)') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Coal Gens not at Max Cap Duration Curve
+```{r coal-operation-duration, fig.height=fig.height.duration}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = coal.gen[Scenario %in% scenarios, ]) +
+  geom_line(aes(x=interval, y=value, color = Scenario), size=1) +
+  scale_y_continuous(limits = c(0, 300)) +
+  scale_color_manual('', values = scenario.color) +
+  xlab('Hours of Year') + ylab('Coal Gens not at Max Cap') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Reserve Shortage Duration Curve
+```{r reserve-shortage-duration, fig.height=fig.height.duration}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = reserve.shortage[Scenario %in% scenarios, ]) +
+  geom_line(aes(x=interval, y=value, color = Scenario), size=1) +
+  scale_y_continuous(limits = c(0, 300)) +
+  scale_color_manual('', values = scenario.color) +
+  xlab('Hours of Year') + ylab('Reserve Shortages') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## TX Congestion Duration Curve
+```{r tx-congestion-duration, fig.height=fig.height.duration}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = tx.congestion[Scenario %in% scenarios, ]) +
+  geom_line(aes(x=interval, y=value, color = Scenario), size=1) +
+  scale_y_continuous(limits = c(0, 300)) +
+  scale_color_manual('', values = scenario.color) +
+  xlab('Hours of Year') + ylab('TX Congestion') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## TX Violation Duration Curve
+```{r tx-violation-duration, fig.height=fig.height.duration}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ggplot(data = tx.violations[Scenario %in% scenarios, ]) +
+  geom_line(aes(x=interval, y=value, color = Scenario), size=1) +
+  scale_y_continuous(limits = c(0, 300)) +
+  scale_color_manual('', values = scenario.color) +
+  xlab('Hours of Year') + ylab('TX Violation') +
+  plot.theme
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Violations
+```{r violations-table}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(violations)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Annual Stats
+```{r annual-stats-table}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(annual.gen.stats)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Average Region Electricity Price
+```{r average-electricity-price}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(avg.prices.regions)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Average Zone Electricity Price
+```{r average-zone-electricity-price}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(avg.prices.zones)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Hours with price > 100 $/MWh
+```{r hours-high-price}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(hours.high.price)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Percent Generation by Type
+```{r gen-type-table}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(gen.type.percent)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Capacity Factor
+```{r capacity-factor-table}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(cap.factor)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Percent Reserve of Reserve+Generation
+```{r percent-reserve-table}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(reserve.gen.percent)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+***
+## Reserve Provision by Type
+```{r reserve-provision-table}
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+kable(reserve.type)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+```
+
+
+
+
+
+
+
