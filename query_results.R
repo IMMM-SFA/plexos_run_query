@@ -1,28 +1,29 @@
-# IM3 Run Analysis
 
+# IM3 Run Analysis
+# This file queries the partitioned solutions and saves an RData file with all the necessary data for producing the HTML file plots. 
+
+# Load r libraries (most of these are unneccessary when you load data.table fyi)
 library(plyr)
 library(dplyr)
 library(rplexos)
-# library(reshape2)
+library(reshape2)
 library(ggplot2)
 library(scales)
 library(lubridate)
 library(data.table)
 
+# Set working directory
 setwd('//nrelqnap02/plexos/projects/im3/Run Results/')
 
-# Set locations for PLEXOS solution DB file and CSV Generator Info File --------------------------------------------------------------------------
-# csvName = 'R/GenNames_LCGS_phase2_new.csv'
+# Set locations for PLEXOS solution DB file and CSV Generator Info File
 csvName = '//nrelqnap02/plexos/projects/im3/Database Info/2010 Gen Mapping/gen_name_mapping.csv'
 csvFileName = read.csv(csvName)
 
-setwd('//nrelqnap02/plexos/projects/im3/PLEXOS_database/Solutions/Fuel Price Solutions/')
-solution.folders = list.files()[grep('.RData', list.files(), invert=T)]
+# Load solution db files into R
+solution.folders = list.files('//nrelqnap02/plexos/projects/im3/PLEXOS_database/Solutions/Fuel Price Solutions/')[grep('.RData', list.files(), invert=T)]
 runs = plexos_open(solution.folders)
 
-# runs = plexos_open('//nrelqnap01d/plexos/projects/im3/PLEXOS_database/Model DA_IM3_year_2010_1day Solution')
-# runs = plexos_open('//nrelqnap01d/plexos/projects/im3/PLEXOS_database/Solutions/future_climate/ccsm_rcp45')
-
+# Make sure class of solution files has all necessary types for querying (used to not always be the case in previous versions)
 attributes(runs)$class = c("rplexos","data.frame","tbl_df")
 # runs = runs[1:6,]
 
@@ -37,13 +38,16 @@ attributes(runs)$class = c("rplexos","data.frame","tbl_df")
 query.time.range = c('2010-01-01', '2010-12-30 23:00:00') # Annual run
 # query.time.range = c('2010-09-06', '2010-09-06 23:00:00') # 1 day test
 
+# Assign filename for RData file that will be saved at the end
 rData.filename = 'fuel_price_data.RData'
+# % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
 
 # # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-# # Loop Functions for Annual------------------------------------------
+# # Loop Functions for Annual Runs (non-partitioned runs, when all .db solution files are in the same folder) ----
 # # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 # 
-# # Adds each row of run results on top of one another
+# # Adds each row of run results on top of one another. The first column will be the scenario names
 # loop_row_join = function(runs, input_function) {
 #   
 #   for ( i in 1:nrow(runs)) {
@@ -61,6 +65,7 @@ rData.filename = 'fuel_price_data.RData'
 # }
 # 
 # # Adds columns of run data next to each other, only adding the run data and not duplicating things like time, name, etc.
+# # The column names will be the scenario names
 # loop_column_join = function(runs, input_function) {
 #   
 #   for ( i in 1:nrow(runs)) {
@@ -78,10 +83,10 @@ rData.filename = 'fuel_price_data.RData'
 # }
 
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-# Loop Functions for 6 month runs------------------------------------------
+# Loop Functions for 6 month partitioned runs (each set of partitioned runs are contained in their own folder) ----
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
-# Adds each row of run results on top of one another
+# Adds each row of run results on top of one another. The first column will be the scenario names
 loop_row_join = function(runs, input_function) {
   
   for ( i in unique(runs$scenario) ) {
@@ -99,6 +104,7 @@ loop_row_join = function(runs, input_function) {
 }
 
 # Adds columns of run data next to each other, only adding the run data and not duplicating things like time, name, etc.
+# # The column names will be the scenario names
 loop_column_join = function(runs, input_function) {
   
   for ( i in unique(runs$scenario) ) {
@@ -115,12 +121,22 @@ loop_column_join = function(runs, input_function) {
   return(totalResults)
 }
 
+
+
+# % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+# % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+# Query functions ----
+# This section start the functions that perform queries of the solution databases
+# % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 # Annual Constraint Violations --------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 im3_run_violations = function(database) {
   
+  # Assign scenario names
   scenario = data.table(Scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario))))
   
   # Calculate unserved energy and # of hours with unserved energy
@@ -164,12 +180,14 @@ im3_run_violations = function(database) {
   # Dollars  
   unserved.energy.cost = unserved.energy*100000
 
+  # Construct final row of data
   violations = cbind(scenario, unserved.energy, hours.ue, constraint.violation, hours.hydro.violation, line.flow.violation, hours.line.flow.violation, 
                      reserve.shortage, hours.reserve.shortage, hydro.cost, line.flow.cost, reserve.shortage.cost, unserved.energy.cost)
+  # Set column names
   names(violations) = c('Scenario', 'Unserved Energy (MWh)', 'Hours with Unserved Energy', 'Hydro Energy Violation (kWh)', 'Hours with Hydro Violation',  
                         'Line Flow Violation (MWh)', 'Hours with Line Flow Violation', 'Reserve Shortage (MWh)', 'Hours with reserve shortage', 'Hydro violation cost (M$)',
                         'Line Flow Violation Cost (M$)', 'Reserve Shortage Cost (M$)', 'Unserved Energy Cost ($)')
-
+  # Return results
   return(violations)
 
 }
@@ -180,6 +198,7 @@ im3_run_violations = function(database) {
 
 im3_annual_results = function(database) {
   
+  # Assign scenario name
   scenario = data.table(Scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario))))
   
   #  % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -231,23 +250,28 @@ im3_annual_results = function(database) {
   fuel.coal = fuel[grep('Coal_', fuel$name), .(Coal.Offtake = sum(value))]
   fuel.ng   = fuel[grep('NG_', fuel$name), .(NG.Offtake = sum(value))]
   
+  # Construct row of all queried data
   annual_results = cbind(scenario, totalCost, load_im3, totalGen, curtailed_sum, curtailed_percent_total, 
                          congested.lines, reserve.provision, reserve.shortage, fuel.coal, fuel.ng)
+  # Set column names
   names(annual_results) = c('Scenario', 'Cost ($)', 'Load (GWh)', 'Generation (GWh)', 'Curtailment (GWh)', 'Curtailment %',
                             '# Congested Lines', 'Reserve Provision (GWh)', 'Reserve Shortage (GWh)', 'Coal Offtake (GBtu)', 'NG Offtake (GBtu)')
-  
+  # Return results
   return(annual_results)
 }
 
 
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-# Gen by type stats ---------------------------------------------------------------
+# Gen by type stats (percent of total generation by each type) ----------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query generation, map generator type to generator name, sum generation by type, figure out percentage of overall generation by each type
 gen_by_type = function(database) {
   
+  # Scenario name
   name = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # query and data manipulation
   yearlyGen = data.table(sum_month(database, 'Generator', 'Generation', time.range = query.time.range ))[, .(name, value)]
   yearlyGen = merge(yearlyGen, csvFileName, by = 'name')
   total_gen = yearlyGen[, .(value = sum(value)), by=Type]
@@ -256,6 +280,7 @@ gen_by_type = function(database) {
   total_gen$Scenario = name
   total_gen = dcast(total_gen, Scenario~Type, value.var='Gen')
   
+  # Return results
   return(total_gen)
 }
 
@@ -264,10 +289,13 @@ gen_by_type = function(database) {
 # Capacity Factor Stats ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query installed capacity and generation. Figure out percentage generation of total possible generation, for each type.
 cap_factor = function(database) {
   
+  # Scenario name
   name = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # query and data manipulation
   cap.factor = data.table(query_month(database, 'Generator', c('Installed Capacity', 'Generation'), time.range = query.time.range ))[, .(name, time, value, property)]
   cap.factor = merge(cap.factor, csvFileName, by = 'name')
   cap.factor$Month = month(cap.factor$time)
@@ -287,10 +315,13 @@ cap_factor = function(database) {
 # TX Congestion ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query # of hours each line is congested, and sum that number for each time period
 tx_congestion = function(database) { 
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation  
   congestion = data.table(query_interval(database, 'Line', 'Hours Congested', time.range = query.time.range ))[, .(time, name, value)]
   congestion = congestion[, .(value = sum(value)), by=time]
   names(congestion) = c('time', scenario)
@@ -303,10 +334,13 @@ tx_congestion = function(database) {
 # Hourly Reserve Shortages ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query total reserve shortage for all reserve objects at each time period. 
 reserve_shortage = function(database) { 
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   shortage = data.table(query_interval(database, 'Reserve', 'Shortage', time.range = query.time.range ))[, .(time, name, value)]
   shortage = shortage[, .(value = sum(value)), by=time]
   colnames(shortage) = c('time', scenario)
@@ -319,10 +353,13 @@ reserve_shortage = function(database) {
 # Hourly TX Flow violation ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query line violations at each interval, then violations of all lines for each time period.
 tx_flow_violation = function(database) { 
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   flow.violation = data.table(query_interval(database, 'Line', 'Violation', time.range = query.time.range ))[, .(time, name, value)]
   flow.violation[, value := abs(value)]
   flow.violation = flow.violation[, .(value = sum(value)), by=time]
@@ -335,10 +372,12 @@ tx_flow_violation = function(database) {
 # Hourly Unserved Energy ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query unserved energy in each zone at each period, then sum all the zones for each time period.
 unserved_energy = function(database) { 
   
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   unserved.energy = data.table(query_interval(database, 'Zone', 'Unserved Energy', time.range = query.time.range ))[, .(time, name, value)]
   unserved.energy = unserved.energy[, .(value = sum(value)), by=time]
   colnames(unserved.energy) = c('time', scenario)
@@ -350,10 +389,12 @@ unserved_energy = function(database) {
 # Hourly Hydro Energy Violation ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query hydro energy constraint violations and report the total violation at each time period.
 hydro_violation = function(database) { 
   
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   hydro.violation = data.table(query_interval(database, 'Constraint', 'Violation', time.range = query.time.range ))[, .(time, name, value)]
   hydro.violation = hydro.violation[grep('GenMaxEne_', hydro.violation$name), ]
   hydro.violation[value < 0.001, value := 0]
@@ -368,6 +409,7 @@ hydro_violation = function(database) {
 # Electricity Prices ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query the average price for each time period, for the entire year, for each region
 prices_annual_region_avg = function(database) {
   
   name = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
@@ -379,6 +421,7 @@ prices_annual_region_avg = function(database) {
   return(avg.price)
 }
 
+# Query the average price for each time period, doing a generation-weighted average, for each region.
 prices_annual_weighted_region_avg = function(database) {
   
   name = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
@@ -406,6 +449,7 @@ prices_annual_weighted_region_avg = function(database) {
   
 }
 
+# Query the average interval price for each interval (time period), across all regions.
 prices_interval_avg = function(database) {
   
   name = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
@@ -419,6 +463,7 @@ prices_interval_avg = function(database) {
   
 }
 
+# Query the average annual price across all intervals and regions
 price_annual_avg_fromRegionPrice = function(database) {
   name = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
@@ -428,6 +473,7 @@ price_annual_avg_fromRegionPrice = function(database) {
   return(avg.price)
 }
 
+# Query the avearage annual price across all intervals and zones
 price_annual_avg_fromZonePrice = function(database) {
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
@@ -437,6 +483,7 @@ price_annual_avg_fromZonePrice = function(database) {
   return(avg.price)
 }
 
+# Query the total number of hours any zone price is above 100 $/MWh
 hours_over_100 = function(database) {
   
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
@@ -451,10 +498,13 @@ hours_over_100 = function(database) {
 # Percent of reserve by generation type ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# query the percent of total reserve provisions coming from each generation type
 annual_reserve_by_type = function(database) {
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   reserve.type = data.table(sum_month(database, 'Reserve.Generators', 'Provision', time.range = query.time.range ))[, .(name, value)]
   reserve.type = merge(reserve.type, csvFileName, by='name')
   reserve.type = reserve.type[, .(value=sum(value)), by=Type]
@@ -471,18 +521,23 @@ annual_reserve_by_type = function(database) {
 # Reserve provision as percent of generator generation + reserves --------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query the percent of total generation + reserves for each generation type, that is being held as reserve provision
 generation_reserves = function(database) {
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Reserve provision data
   reserve.type = data.table(sum_month(database, 'Reserve.Generators', 'Provision', time.range = query.time.range ))[, .(name, value)]
   reserve.type = merge(reserve.type, csvFileName, by='name')
   reserve.type = reserve.type[, .(provision=sum(value)), by=Type]
   
+  # Generation data
   generation = data.table(sum_month(database, 'Generator', 'Generation', time.range = query.time.range ))[, .(name, value)]
   generation = merge(generation, csvFileName, by='name')
   generation = generation[, .(generation = sum(value)), by=Type]
   
+  # Calculating percent of generation and reserves that is reserves
   reserve.percent = merge(reserve.type, generation, by='Type', all.y=FALSE)
   reserve.percent$total = reserve.percent$provision+reserve.percent$generation
   reserve.percent = reserve.percent[, .(Type, percent = (provision / total * 100))]
@@ -498,10 +553,13 @@ generation_reserves = function(database) {
 # Hours coal not at max cap---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query the number of hours that the coal fleet is not operating at max capacity (lower efficiency)
 hours_not_max_all_coal = function(database) {
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Generation and max capacity queries, then data manipulation and rearranging
   gen.data = data.table(query_interval(database, 'Generator', c('Generation', 'Max Capacity'),  time.range = query.time.range, 
                                        filter = list(name = subset(csvFileName, Type == 'Coal')$name) ))[, .(time, name, value, property)]
   gen.data = dcast(gen.data, time+name~property, value.var='value')
@@ -520,10 +578,13 @@ hours_not_max_all_coal = function(database) {
 # Generation dispatch stack by region ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Total generation in each region, plotted as dispatch stack showing individual generation types
 gen_by_type_region = function(database) {
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   gen = data.table(sum_month(database, 'Generator', 'Generation', time.range = query.time.range))[, .(name, value)]
   gen = merge(gen, csvFileName, by='name')
   gen = gen[, .(value = sum(value)), by=.(Type, TEPPC.Region)]
@@ -537,10 +598,13 @@ gen_by_type_region = function(database) {
 # Reserve Provision by region ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query the regional reserve provision
 reserve_provision_region = function(database) {
   
+  # scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   reserve.type = data.table(sum_month(database, 'Reserve.Generators', 'Provision', time.range = query.time.range ))[, .(name, value)]
   reserve.type = merge(reserve.type, csvFileName, by='name')
   reserve.type = reserve.type[, .(provision=sum(value)), by=.(Type, TEPPC.Region)]
@@ -554,10 +618,14 @@ reserve_provision_region = function(database) {
 # Available Hydro Energy for plotting order ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Queries the total available hydro energy, so that the order of available hydro in each year can be determined.
+# * This isn't used anymore since PNNL specified which years are wettest, driest, etc. *
 available_hydro = function(database) {
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   hydro = data.table(sum_month(database, 'Generator', 'Available Energy'), time.range = query.time.range , filter = list(name = subset(csvFileName, Type == 'Hydro')$name))[, .(value)]
   hydro$scenario = scenario
   hydro = hydro[, .(value = sum(value)), by=scenario]
@@ -570,10 +638,13 @@ available_hydro = function(database) {
 # TEPPC.Region Imports and Exports (GWh) ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query imports and exports between all regions
 imports_exports = function(database) {
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   imports.exports = data.table(sum_month(database, 'Region', c('Imports', 'Exports'), time.range = query.time.range ))[, .(name, property, value)]
   setnames(imports.exports, 'name', 'Region')
   imports.exports = join(imports.exports, csvFileName[,c('Region', 'TEPPC.Region')], by='Region', match='first')
@@ -587,10 +658,13 @@ imports_exports = function(database) {
 # Region Load (GWh) ---------------------------------------------------------------
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
+# Query load for all regions, which is used in regional dispatch plots
 load = function(database) {
   
+  # Scenario name
   scenario = unique(gsub(' Solution-rplexos.db', '', gsub('.*Model ', '', database$scenario)))
   
+  # Query and data manipulation
   annual.load = data.table(sum_month(database, 'Region', 'Load', time.range = query.time.range ))[, .(name, property, value)]
   annual.load[, property := NULL]
   setnames(annual.load, 'value', scenario)

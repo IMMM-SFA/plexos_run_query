@@ -10,21 +10,24 @@ output:
 
 ```{r setOptions, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# Set up default options for chunks, turn off error or warning messages.
+# Set up default options for chunks (sections), turn off error or warning messages.
 knitr::opts_chunk$set(echo=FALSE, comment=NA, warning=FALSE, message=FALSE, include=TRUE,
                       fig.path='//nrelqnap02/plexos/projects/im3/run results/plots/', dev='png', fig.width=18)
 
+# Load required R libraries
 library(data.table)
 library(ggplot2)
 library(plyr)
 library(knitr)
 library(rplexos)
 
+# Set figure height and text size options
 fig.height.gen.types = 8
 fig.height.reserves = 8
 fig.height.duration = 8
 element.text.size = 12
 
+# Create plot theme to use for generic plot template
 plot.theme = theme_bw() + 
   theme(axis.text.x = element_text(angle = -30, hjust=0, size=element.text.size),
         axis.title = element_text(size = 16),
@@ -39,17 +42,12 @@ plot.theme = theme_bw() +
 ## Total Generation Cost with Penalties
 ```{r total-gen-cost-penalties}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Create plot of total generation cost, which includes all penalties during the plexos simulation
 ggplot(data = annual.gen.stats) +
   geom_col(aes(x=Scenario, y=`Total Cost ($)`, colour='gray25'), show.legend=FALSE) +
   # scale_fill_manual('', values = fuel.color) +
   ylab('Generation Cost ($)') + xlab('Scenario') +
   plot.theme
-
-# ggplot(data = annual.gen.stats) +
-#   geom_col(aes(x=Scenario, y=`Total Cost ($)`, fill=Scenario, colour='black'), show.legend=FALSE) +
-#   # scale_fill_manual('', values = fuel.color) +
-#   ylab('Generation Cost ($)') + xlab('Scenario') +
-#   plot.theme
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```
 
@@ -57,17 +55,12 @@ ggplot(data = annual.gen.stats) +
 ## Total Generation Cost without Penalties
 ```{r total-gen-cost}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Create plot of total generation for each scenario, ignoring any penalty costs during the plexos simulation.
 ggplot(data = annual.gen.stats) +
   geom_col(aes(x=Scenario, y=`Cost ($)`, colour='gray25'), show.legend=FALSE) +
   # scale_fill_manual('', values = scenario.color) +
   ylab('Generation Cost ($)') + xlab('Scenario') +
   plot.theme
-
-# ggplot(data = annual.gen.stats) +
-#   geom_col(aes(x=Scenario, y=`Cost ($)`, fill=Scenario, colour='black'), show.legend=FALSE) +
-#   # scale_fill_manual('', values = fuel.color) +
-#   ylab('Generation Cost ($)') + xlab('Scenario') +
-#   plot.theme
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```
 
@@ -76,19 +69,15 @@ ggplot(data = annual.gen.stats) +
 ## Average Region Energy Price
 ```{r energy-price}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Set scenarios as factors so they are in the correct order in the plots.
 avg.prices$Scenario = factor(avg.prices$Scenario, levels = plotting.order)
 
+# Create plot of average regional energy price for all regions and all periods
 ggplot(data = avg.prices) +
   geom_col(aes(x=Scenario, y=`Price  ($/MWh)`, color='gray25'), show.legend=FALSE) +
   xlab('Scenario') + ylab('Avg Energy Price ($/MWh)') +
   # scale_fill_manual('', values = scenario.color) +
   plot.theme
-
-# ggplot(data = avg.prices) +
-#   geom_col(aes(x=Scenario, y=`Price  ($/MWh)`, fill=Scenario, colour='black'), show.legend=FALSE) +
-#   xlab('Scenario') + ylab('Avg Energy Price ($/MWh)') +
-#   # scale_fill_manual('', values = fuel.color) +
-#   plot.theme
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```
 
@@ -96,19 +85,15 @@ ggplot(data = avg.prices) +
 ## Average Zone Energy Price
 ```{r zone-energy-price}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Set scenarios as factors so they are in the correct order in the plots.
 avg.zone.price$Scenario = factor(avg.zone.price$Scenario, levels = plotting.order)
 
+# Create plot of average zone energy price for all zones and all periods
 ggplot(data = avg.zone.price) +
   geom_col(aes(x=Scenario, y=`Price  ($/MWh)`, color='gray25'), show.legend=FALSE) +
   xlab('Scenario') + ylab('Avg Energy Price ($/MWh)') +
   # scale_fill_manual('', values = scenario.color) +
   plot.theme
-
-# ggplot(data = avg.zone.price) +
-#   geom_col(aes(x=Scenario, y=`Price  ($/MWh)`, fill=Scenario, colour='black'), show.legend=FALSE) +
-#   xlab('Scenario') + ylab('Avg Energy Price ($/MWh)') +
-#   # scale_fill_manual('', values = fuel.color) +
-#   plot.theme
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```
 
@@ -116,8 +101,10 @@ ggplot(data = avg.zone.price) +
 ## Hours with High Price
 ```{r high-price}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Set scenarios as factors for plotting order
 hours.high.price$Scenario = factor(hours.high.price$Scenario, levels = plotting.order)
 
+# Create plot of number of hours with energy prices over 100 $/MWh for each scenario
 ggplot(data = hours.high.price) +
   geom_col(aes(x=Scenario, y=`# Hours over 100 $/MWh`, color='gray25'), show.legend=FALSE) +
   xlab('Scenario') + ylab('Hours with High Price') +
@@ -130,14 +117,17 @@ ggplot(data = hours.high.price) +
 ## Unserved Energy
 ```{r violations-energy}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Set scenarios as factors for plotting
 violations$Scenario = factor(violations$Scenario, levels = plotting.order)
 
+# Create plot of unserved energy for each scenario
 ggplot(data = violations) +
   geom_col(aes(x=Scenario, y=`Unserved Energy (MWh)`, color='gray25'), show.legend = FALSE) +
   # scale_fill_manual('', values = scenario.color) +
   xlab('Scenario') + ylab('Unserved Energy (MWh)') +
   plot.theme
 
+# Create plot of # of hours with unserved energy for each scenario
 ggplot(data = violations) +
   geom_col(aes(x=Scenario, y=`Hours with Unserved Energy`, color='gray25'), show.legend = FALSE) +
   # scale_fill_manual('', values = scenario.color) +
@@ -150,13 +140,14 @@ ggplot(data = violations) +
 ## Line Flow Violation
 ```{r violations-line-flow}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+# Create plot of line flow violation for each scenario, in MWh
 ggplot(data = violations) +
   geom_col(aes(x=Scenario, y=`Line Flow Violation (MWh)`, color='gray25'), show.legend = FALSE) +
   # scale_fill_manual('', values = scenario.color) +
   xlab('Scenario') + ylab('Line Flow Violation (MWh)') +
   plot.theme
 
+# Create plot of # of hours of line flow violation for each scenario
 ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Hours with Line Flow Violation`, color='gray25'), show.legend = FALSE) +
   # scale_fill_manual('', values = scenario.color) +
   xlab('Scenario') + ylab('Hours with Line Flow Violation') +
@@ -168,11 +159,13 @@ ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Hours with Line Flow Vio
 ## Reserve Shortage
 ```{r violations-reserve}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Plot of reserve shortage
 ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Reserve Shortage (MWh)`, color='gray25'), show.legend = FALSE) +
   # scale_fill_manual('', values = scenario.color) +
   xlab('Scenario') + ylab('Reserve Shortage (MWh)') +
   plot.theme
 
+# Plot of # of hours of reserve shortage
 ggplot(data = violations) + geom_col(aes(x=Scenario, y=`Hours with reserve shortage`, color='gray25'), show.legend = FALSE) +
   # scale_fill_manual('', values = scenario.color) +
   xlab('Scenario') + ylab('Hours with reserve shortage') +

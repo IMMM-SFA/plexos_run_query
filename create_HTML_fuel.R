@@ -1,33 +1,32 @@
 
+# Load required R libraries 
 library(rmarkdown)
 library(data.table)
 library(RColorBrewer)
 
+# Load saved RData file from the query_results.R file.
 load('//nrelqnap02/plexos/projects/im3/Run Results/fuel_price_data.RData')
 
+# Filename to save .HTML file.
 output.filename = 'IM3_plots_fuel_price_report_neworder.html'
 
+# Mapping file which will map PLEXOS Regions to TEPPC Regions and WECC BA's
 ba.mapping = fread('//nrelqnap02/plexos/projects/im3/Run Results/ba_to_teppc_region.csv')
+
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# Year plotting order
+# Order to display results when creating plots (these will be across the x-axis)
 
 # Plotting order for fuel price runs
 plotting.order = c('1993_fuel_2_5', '2010_fuel_2_5', '1980_fuel_2_5', '1985_fuel_2_5', '1967_fuel_2_5', '1993_fuel_5', '2010_fuel_5', '1980_fuel_5', '1985_fuel_5', '1967_fuel_5',
                    '1993_fuel_7_5', '2010_fuel_7_5', '1980_fuel_7_5', '1985_fuel_7_5', '1967_fuel_7_5', '1993_fuel_10', '2010_fuel_10', '1980_fuel_10', '1985_fuel_10', '1967_fuel_10' )
-# plotting.order = c('1993_fuel_2_5', '1993_fuel_5', '1993_fuel_7_5', '1993_fuel_10', '2010_fuel_2_5', '2010_fuel_5', '2010_fuel_10', '2010_fuel_7_5', 
-#                    '1980_fuel_2_5', '1980_fuel_5', '1980_fuel_7_5', '1980_fuel_10', '1985_fuel_2_5', '1985_fuel_5', '1985_fuel_7_5', '1985_fuel_10', 
-#                    '1967_fuel_2_5', '1967_fuel_5','1967_fuel_7_5', '1967_fuel_10' )
-# # plotting.order = c('2010_fuel_2_5', '2010_fuel_5', '2010_fuel_7_5', '2010_fuel_10' )
 
-# # Plot according to water availability
-# plotting.order = rev(c('1967', '1989', '1985', '1990', '1991', '1980', '1982', '1996', '1966', '1956', '1981', '1959', '1958', '1988', '1995', '1999',
-#                    '1973', '1974', '2010', '1984', '1979', '1997', '1957', '2006', '2007', '2009', '1983', '1992', '1965', '1964', '2000', '2004',
-#                    '2005', '1972', '1998', '1987', '2008', '2003', '1963', '1962', '1969', '1977', '1960', '1978', '1976', '1975', '1961', '1968',
-#                    '1994', '1971', '2001', '1986', '1970', '1993', '2002'))
-
-# Plot according to available hydro generation
+# # If using the available hydro queried from the query_results.R file, use the line below. 
+# # Plot according to available hydro generation:
 # plotting.order = gsub('DA_IM3_year_', '', hydro.available$scenario[order(hydro.available$value, decreasing=TRUE)])
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Shortening scenario names so they match the names in plotting order above and aren't unnecessarily long.
 annual.gen.stats[, Scenario := gsub('.*year_', '', annual.gen.stats$Scenario)]
 avg.prices.regions[, Scenario := gsub('.*year_', '', avg.prices.regions$Scenario)]
 avg.prices.zones[, Scenario := gsub('.*year_', '', avg.prices.zones$Scenario)]
@@ -38,6 +37,7 @@ reserve.gen.percent[, Scenario := gsub('.*year_', '', reserve.gen.percent$Scenar
 reserve.type[, Scenario := gsub('.*year_', '', reserve.type$Scenario)]
 violations[, Scenario := gsub('.*year_', '', violations$Scenario)]
 
+# Filtering out any scenarios which are not listed in the plotting.order object defined above. This can also be used to only show results for some of the runs.
 annual.gen.stats = annual.gen.stats[Scenario %in% plotting.order, ]
 avg.prices.regions = avg.prices.regions[Scenario %in% plotting.order, ]
 avg.prices.zones = avg.prices.zones[Scenario %in% plotting.order, ]
@@ -48,11 +48,9 @@ reserve.gen.percent = reserve.gen.percent[Scenario %in% plotting.order, ]
 reserve.type = reserve.type[Scenario %in% plotting.order, ]
 violations = violations[Scenario %in% plotting.order, ]
 
-# violations$`Line Flow Violation Cost (MM$)` = violations$`Line Flow Violation Cost (MM$)`*1000
-# setnames(violations, 'Line Flow Violation Cost (MM$)', 'Line Flow Violation Cost (M$)')
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# Set gen order and gen colors
+# Set order for generation types to appear in plots, and the color each generaiton type should be. 
 gen.order = c('Nuclear', 'Coal', 'Hydro', 'Gas CC', 'Gas CT', 'Steam', 'CHP-QF', 'ICE Gas', 
               'Biomass', 'Geothermal', 'Other', 'Storage', 'CSP', 'PV', 'Wind')
 
@@ -72,14 +70,14 @@ color.1967 = 'gray95'
 fuel.color = setNames(rep(c(color.1993, color.2010, color.1980, color.1985, color.1967), times=4), plotting.order)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# Set scenario colors
-# scenarios = annual.gen.stats$Scenario
+# Set colors to plot all the scenarios colors in the duration curves
 scenarios = plotting.order
-# scenario.color = setNames(brewer.pal(length(scenarios), "Dark2"), scenarios)
 scenario.color = setNames(rainbow(length(scenarios)), scenarios)
 
 
+
 # ##########################################################################
+# Below is calculations and data manipulation to get the data in the correct format for plotting in the next file
 # ##########################################################################
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -87,7 +85,6 @@ scenario.color = setNames(rainbow(length(scenarios)), scenarios)
 annual.gen.stats[, `Total Cost ($)` := (`Cost ($)` + violations[,`Unserved Energy Cost ($)`] + violations[,`Reserve Shortage Cost (M$)`]*1000 + 
                                           violations[,`Line Flow Violation Cost (M$)`]*1000000 + violations[, `Hydro violation cost (M$)`]*1000) ]
 annual.gen.stats[, Rank := rank(annual.gen.stats$`Total Cost ($)`)]
-# annual.gen.stats$Scenario = factor(annual.gen.stats$Scenario, levels = annual.gen.stats$Scenario[order(annual.gen.stats$Rank)])
 annual.gen.stats$Scenario = factor(annual.gen.stats$Scenario, levels = plotting.order)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -136,7 +133,6 @@ region.price.w.teppc = region.price.w.teppc[Scenario %in% plotting.order, ]
 region.price.w.teppc$Scenario = factor(region.price.w.teppc$Scenario, levels = plotting.order)
 
 
-
 # ##########################################################################
 # ##########################################################################
 # Duration curve plots
@@ -181,7 +177,6 @@ tx.violations[, Scenario := gsub('.*year_', '', tx.violations$Scenario)]
 # Generation by type stacks and order generation types according to specified order
 gen.by.type = melt(gen.type.percent, id.vars='Scenario', variable.name='type')
 gen.by.type$type = factor(gen.by.type$type, levels = rev(gen.order))
-# gen.by.type$Scenario = factor(gen.by.type$Scenario, levels = annual.gen.stats$Scenario[order(annual.gen.stats$Rank)])
 gen.by.type$Scenario = factor(gen.by.type$Scenario, levels = plotting.order)
 
 # Gen by type and region
@@ -191,6 +186,7 @@ gen.type.region[, Scenario := gsub('.*year_', '', gen.type.region$Scenario)]
 gen.type.region = gen.type.region[Scenario %in% plotting.order, ]
 gen.type.region$Scenario = factor(gen.type.region$Scenario, levels = plotting.order)
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Annual region load
 annual.load = merge(annual.load, ba.mapping)
 annual.load = melt(annual.load, id.vars=c('name', 'TEPPC.Region'), variable.name='Scenario')
@@ -203,23 +199,21 @@ annual.load = annual.load[Scenario %in% plotting.order, ]
 # Capacity Factor
 capacity.factor = melt(cap.factor, id.vars='Scenario', variable.name='type')
 capacity.factor$type = factor(capacity.factor$type, levels = rev(gen.order))
-# capacity.factor$Scenario = factor(capacity.factor$Scenario, levels = annual.gen.stats$Scenario[order(annual.gen.stats$Rank)])
 capacity.factor$Scenario = factor(capacity.factor$Scenario, levels = plotting.order)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Reserve Gen Percent
 reserve.generation.percent = melt(reserve.gen.percent, id.vars='Scenario', variable.name='type')
 reserve.generation.percent$type = factor(reserve.generation.percent$type, levels = rev(gen.order))
-# reserve.generation.percent$Scenario = factor(reserve.generation.percent$Scenario, levels = annual.gen.stats$Scenario[order(annual.gen.stats$Rank)])
 reserve.generation.percent$Scenario = factor(reserve.generation.percent$Scenario, levels = plotting.order)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Reserve Provision
 reserve.provision = melt(reserve.type, id.vars='Scenario', variable.name='type')
 reserve.provision$type = factor(reserve.provision$type, levels = rev(gen.order))
-# reserve.provision$Scenario = factor(reserve.provision$Scenario, levels = annual.gen.stats$Scenario[order(annual.gen.stats$Rank)])
 reserve.provision$Scenario = factor(reserve.provision$Scenario, levels = plotting.order)
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Reserve provision by type and region
 reserve.provision.region = melt(reserve.provision.region, id.vars=c('Type', 'TEPPC.Region'), variable.name='Scenario')
 reserve.provision.region$Type = factor(reserve.provision.region$Type, levels = rev(gen.order))
@@ -231,5 +225,6 @@ reserve.provision.region$Scenario = factor(reserve.provision.region$Scenario, le
 
 # ##########################################################################
 # ##########################################################################
-render(input='//nrelqnap02/plexos/projects/im3/Run Results/plot_creator_fuel.Rmd', c("html_document"), 
+# Call the .Rmd file which creates the resulting HTML report file. 
+render(input='//nrelqnap02/plexos/projects/im3/Run Results/plexos_run_query/plot_creator_fuel.Rmd', c("html_document"), 
        output_file=output.filename, output_dir = '//nrelqnap02/plexos/projects/im3/Run Results')
