@@ -8,12 +8,12 @@
 # while creating the necessary folders at the same time. 
 
 # Set working directory where solution files are contained
-setwd('//nrelqnap01d/plexos/projects/IM3/PLEXOS_database/Solutions/')
+setwd('//nrelqnap01d/plexos/projects/IM3/PLEXOS_database/Solutions/test/')
 
 # Either point folders to empty ('') if all solutions are in the working directory. If there are multiple scenarios (folders), that each contain partitioned solutions for many years for that 
 # respective scenario, folders can then point to the individual folder to process. In other words, if all solution files are contained in a folder called "Solutions", either the working 
 # directory can be set to "Solutions", or it can be set one level up, and then folders can be set to = "Solutions"
-folders = 'Fuel Price Solutions'
+#folders = 'Fuel Price Solutions'
 folders = ''
 
 for ( i in folders) {
