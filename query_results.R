@@ -13,14 +13,15 @@ library(lubridate)
 library(data.table)
 
 # Set working directory
-setwd('//nrelqnap02/plexos/projects/im3/Run Results/')
+setwd('//nrelqnap02/plexos/projects/im3/PLEXOS_database/Solutions/future_climate/ccsm_rcp45')
 
 # Set locations for PLEXOS solution DB file and CSV Generator Info File
-csvName = '//nrelqnap02/plexos/projects/im3/Database Info/2010 Gen Mapping/gen_name_mapping.csv'
+csvName = '//nrelqnap02/plexos/projects/im3/Run Results/gen_name_mapping_aggregated_gas.csv'
 csvFileName = read.csv(csvName)
 
 # Load solution db files into R
-solution.folders = list.files('//nrelqnap02/plexos/projects/im3/PLEXOS_database/Solutions/Fuel Price Solutions/')[grep('.RData', list.files(), invert=T)]
+
+solution.folders = list.files()
 runs = plexos_open(solution.folders)
 
 # Make sure class of solution files has all necessary types for querying (used to not always be the case in previous versions)
@@ -39,7 +40,7 @@ query.time.range = c('2010-01-01', '2010-12-30 23:00:00') # Annual run
 # query.time.range = c('2010-09-06', '2010-09-06 23:00:00') # 1 day test
 
 # Assign filename for RData file that will be saved at the end
-rData.filename = 'fuel_price_data.RData'
+rData.filename = 'IM3_future_ccsm_rcp45.RData'
 # % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 
@@ -562,7 +563,7 @@ hours_not_max_all_coal = function(database) {
   # Generation and max capacity queries, then data manipulation and rearranging
   gen.data = data.table(query_interval(database, 'Generator', c('Generation', 'Max Capacity'),  time.range = query.time.range, 
                                        filter = list(name = subset(csvFileName, Type == 'Coal')$name) ))[, .(time, name, value, property)]
-  gen.data = dcast(gen.data, time+name~property, value.var='value')
+  gen.data = data.table(dcast(gen.data, time+name~property, value.var='value'))
   gen.data[, GenDiff := `Max Capacity`*.9 - Generation]
   gen.data[GenDiff<0,GenDiff := 0]
   gen.data[, c('Generation', 'Max Capacity') := NULL]

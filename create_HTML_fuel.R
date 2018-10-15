@@ -8,7 +8,7 @@ library(RColorBrewer)
 load('//nrelqnap02/plexos/projects/im3/Run Results/fuel_price_data.RData')
 
 # Filename to save .HTML file.
-output.filename = 'IM3_plots_fuel_price_report_neworder.html'
+output.filename = 'IM3_plots_fuel_price_report_paper_August.html'
 
 # Mapping file which will map PLEXOS Regions to TEPPC Regions and WECC BA's
 ba.mapping = fread('//nrelqnap02/plexos/projects/im3/Run Results/ba_to_teppc_region.csv')
@@ -51,11 +51,11 @@ violations = violations[Scenario %in% plotting.order, ]
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Set order for generation types to appear in plots, and the color each generaiton type should be. 
-gen.order = c('Nuclear', 'Coal', 'Hydro', 'Gas CC', 'Gas CT', 'Steam', 'CHP-QF', 'ICE Gas', 
-              'Biomass', 'Geothermal', 'Other', 'Storage', 'CSP', 'PV', 'Wind')
+gen.order = c('Other', 'Nuclear', 'Coal', 'Hydro', 'Natural Gas',  'CHP', 
+              'Biomass', 'Geothermal', 'Storage',  'PV', 'Wind')
 
-gen.color = c('firebrick', 'gray20', 'lightblue', 'darkolivegreen4', 'lightpink', 'orchid4', 'gray20', 'gray60', 
-              'mediumpurple2', 'khaki1', 'mediumpurple3', 'gray45', 'darkorange2', 'goldenrod1', 'steelblue3') 
+gen.color = c('gray60', 'firebrick', 'gray20', 'lightblue', 'darkolivegreen4', 'gray20',
+              'mediumpurple2', 'khaki1', 'gray45', 'goldenrod1', 'steelblue3') 
 
 gen.color = setNames( gen.color, gen.order )
 
@@ -179,7 +179,7 @@ gen.by.type = melt(gen.type.percent, id.vars='Scenario', variable.name='type')
 gen.by.type$type = factor(gen.by.type$type, levels = rev(gen.order))
 gen.by.type$Scenario = factor(gen.by.type$Scenario, levels = plotting.order)
 
-# Gen by type and region
+sum# Gen by type and region
 gen.type.region = melt(gen.type.region, id.vars=c('Type', 'TEPPC.Region'), variable.name='Scenario')
 gen.type.region$Type = factor(gen.type.region$Type, levels = rev(gen.order))
 gen.type.region[, Scenario := gsub('.*year_', '', gen.type.region$Scenario)]
@@ -222,9 +222,9 @@ reserve.provision.region = reserve.provision.region[Scenario %in% plotting.order
 reserve.provision.region$Scenario = factor(reserve.provision.region$Scenario, levels = plotting.order)
 
 
-
-# ##########################################################################
-# ##########################################################################
-# Call the .Rmd file which creates the resulting HTML report file. 
-render(input='//nrelqnap02/plexos/projects/im3/Run Results/plexos_run_query/plot_creator_fuel.Rmd', c("html_document"), 
+ 
+# # ##########################################################################
+# # ##########################################################################
+# Call the .Rmd file which creates the resulting HTML report file.
+render(input='//nrelqnap02/plexos/projects/im3/Run Results/plexos_run_query/plot_creator_fuel.Rmd', c("html_document"),
        output_file=output.filename, output_dir = '//nrelqnap02/plexos/projects/im3/Run Results')

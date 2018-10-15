@@ -57,9 +57,17 @@ ggplot(data = annual.gen.stats) +
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Create plot of total generation for each scenario, ignoring any penalty costs during the plexos simulation.
 ggplot(data = annual.gen.stats) +
-  geom_col(aes(x=Scenario, y=`Cost ($)`, fill=Scenario, colour='black'), show.legend=FALSE) +
+  geom_col(aes(x=Scenario, y=`Cost ($)`/1000000000, fill=Scenario, colour='black'), show.legend=FALSE) +
+  
+   geom_errorbar(aes(x = Scenario, ymin=min(annual.gen.stats[grep('1993', Scenario), .(`Cost ($)`)])/1000000000, 
+                                   ymax=min(annual.gen.stats[grep('1993', Scenario), .(`Cost ($)`)])/1000000000),
+                            size=0.65, linetype='dashed', color='black') +
+   geom_errorbar(aes(x = Scenario, ymin=max(annual.gen.stats[grep('1993', Scenario), .(`Cost ($)`)])/1000000000, 
+                                   ymax=max(annual.gen.stats[grep('1993', Scenario), .(`Cost ($)`)])/1000000000),
+                          size=0.65, linetype='dashed', color='black') +
+  
   scale_fill_manual('', values = fuel.color) +
-  ylab('Generation Cost ($)') + xlab('Scenario') +
+  ylab('Generation Cost (Billion $)') + xlab('Scenario') +
   plot.theme
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```
@@ -282,11 +290,26 @@ ggplot(data = annual.gen.stats) + geom_col(aes(x=Scenario, y=`Curtailment %`, co
 ## Generation Percent by Type
 ```{r generation-percent, fig.height=fig.height.gen.types}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ggplot(data = gen.by.type) + geom_bar(aes(x=Scenario, y=value, fill=type), position='stack', stat='identity') +
+# ggplot(data = gen.by.type) + geom_bar(aes(x=Scenario, y=value, fill=type), position='stack', stat='identity') +
+#   scale_fill_manual('', values = gen.color) +
+#   xlab('Scenario') +
+#   ylab('Gen (% of load)') +
+#   plot.theme
+
+other.gen.types = gen.by.type[!type %in% c('Hydro', 'Coal', 'Natural Gas'), .(type = 'Other', value = sum(value)), by=Scenario]
+# other.gen.types$type = factor(other.gen.types$type, levels = plotting.order)
+plot.data = rbind(gen.by.type[!type %in% c('Other')], other.gen.types)
+
+ggplot(data = plot.data[type %in% c('Other', 'Hydro', 'Coal', 'Natural Gas')  , ]) + geom_bar(aes(x=Scenario, y=value, fill=type), position='stack', stat='identity') +
   scale_fill_manual('', values = gen.color) +
   xlab('Scenario') +
   ylab('Gen (% of load)') +
-  plot.theme
+  plot.theme +
+  theme(legend.text = element_text(size=10))
+        # ,
+        # legend.background = element_rect(size = 0.5, color='black'))
+        # ,
+        # legend.position = c(0.9,0.26))
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ```
 
@@ -294,16 +317,33 @@ ggplot(data = gen.by.type) + geom_bar(aes(x=Scenario, y=value, fill=type), posit
 ## Generation by Type and Region
 ```{r generation-type-region, fig.height=fig.height.gen.types*3, fig.width=18}
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ggplot(data = gen.type.region[!TEPPC.Region %in% c('Canada', 'Mexico'),]) +
-  geom_bar(aes(x=Scenario, y=value, fill=Type), position='stack', stat='identity') +
-  geom_errorbar(data = annual.load[!TEPPC.Region %in% c('Canada', 'Mexico')], aes(x = Scenario, ymin=value, ymax=value, color='grey20'),
+gen.type.region[ TEPPC.Region == 'Desert SouthWest', TEPPC.Region := 'Desert Southwest']
+annual.load[ TEPPC.Region == 'Southwest', TEPPC.Region := 'Desert Southwest']
+
+other.gen.types = gen.type.region[!Type %in% c('Hydro', 'Coal', 'Natural Gas'), .(Type = 'Other', value = sum(value)), by=.(Scenario, TEPPC.Region)]
+plot.data = rbind(gen.type.region, other.gen.types)
+
+ggplot(data = plot.data[!TEPPC.Region %in% c('Canada', 'Mexico') & Type %in% c('Other', 'Hydro', 'Coal', 'Natural Gas'),]) +
+  geom_bar(aes(x=Scenario, y=value/1000, fill=Type), position='stack', stat='identity') +
+  geom_errorbar(data = annual.load[!TEPPC.Region %in% c('Canada', 'Mexico')], aes(x = Scenario, ymin=value/1000, ymax=value/1000, color='grey20'),
                             size=0.65, linetype='longdash') +
   scale_fill_manual('', values = gen.color) +
   scale_color_manual('', values = c('grey20'), labels=c('Load'))+
   xlab('Scenario') +
-  ylab('Gen (GWh)') +
-  facet_grid(TEPPC.Region~., scales='free_y') +
-  plot.theme
+  ylab('Generation (TWh)') +
+  facet_grid(TEPPC.Region~.) +
+  plot.theme                                                                                                    
+                                                                                                    
+# ggplot(data = gen.type.region[!TEPPC.Region %in% c('Canada', 'Mexico'),]) +
+#   geom_bar(aes(x=Scenario, y=value, fill=Type), position='stack', stat='identity') +
+#   geom_errorbar(data = annual.load[!TEPPC.Region %in% c('Canada', 'Mexico')], aes(x = Scenario, ymin=value, ymax=value, color='grey20'),
+#                             size=0.65, linetype='longdash') +
+#   scale_fill_manual('', values = gen.color) +
+#   scale_color_manual('', values = c('grey20'), labels=c('Load'))+
+#   xlab('Scenario') +
+#   ylab('Gen (GWh)') +
+#   facet_grid(TEPPC.Region~.) +
+#   plot.theme
 
 # # This code was used for the AGU presentation plots I made
 # gen.type.region$TEPPC.Region = factor(gen.type.region$TEPPC.Region, levels = c('Basin', 'Southern California', 'Southwest', 'Northwest', 'Canada',

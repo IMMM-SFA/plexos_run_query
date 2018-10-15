@@ -5,21 +5,26 @@ library(data.table)
 library(RColorBrewer)
 
 # Load saved RData file from the query_results.R file.
-load('//nrelqnap02/plexos/projects/im3/Run Results/IM3_future_inm_rcp85.RData')
+load('//nrelqnap02/plexos/projects/im3/Run Results/V2_future_html_and_RData/')
 
 # Filename to save .HTML file.
-output.filename = 'IM3_plots_future_inm_rcp85.html'
+output.filename = 'IM3_historical_AD.html'
 
 # Name of the scenario to produce results for. This should be the folder name, which inside has all the solution files in their own folders (if partitioned), or just inside if not partitioned.
-future.scenario = 'inm_rcp85'
+#future.scenario = 'ccsm_rcp45'
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Order to display results when creating plots (these will be across the x-axis)
 
-# Read a file stating the order to plot each years' results. 
-plotting.order = fread('//nrelqnap02/plexos/projects/im3/Future_years_dry_to_wet.csv')
-plotting.order = rev(as.character(plotting.order[, get(future.scenario)]))
-plotting.order = paste0(future.scenario, '_', plotting.order)
+# Read a file stating the order to plot each years' results. This is used for the future year scenarios
+#plotting.order = fread('//nrelqnap02/plexos/projects/im3/Future_years_dry_to_wet.csv')
+#plotting.order = rev(as.character(plotting.order[, get(future.scenario)]))
+#plotting.order = paste0(future.scenario, '_', plotting.order)
+
+# # Plotting order for 55 historical water years. This is used for the historical water year scenarios
+ plotting.order = rev(c('1967', '1989', '1985', '1990', '1991', '1980', '1982', '1996', '1966', '1956', '1981', '1959', '1958', '1988', '1995', '1999', '1973', '1974', '2010',
+                    '1984', '1979', '1997', '1957', '2006', '2007', '2009', '1983', '1992', '1965', '1964', '2000', '2004', '2005', '1972', '1998', '1987', '2008', '2003',
+                    '1963', '1962', '1969', '1977', '1960', '1978', '1976', '1975', '1961', '1968', '1994', '1971', '2001', '1986', '1970', '1993', '2002'))
 
 # # If using the available hydro data queried from the query_results.R file, use the line below. 
 # # Plot according to available hydro generation:
@@ -28,9 +33,10 @@ plotting.order = paste0(future.scenario, '_', plotting.order)
   
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Shortening scenario names so they match the names in plotting order above and aren't unnecessarily long.
+
 annual.gen.stats[, Scenario := gsub('.*year_', '', annual.gen.stats$Scenario)]
-avg.prices[, Scenario := gsub('.*year_', '', avg.prices$Scenario)]
-avg.zone.price[, Scenario := gsub('.*year_', '', avg.zone.price$Scenario)]
+avg.prices.regions[, Scenario := gsub('.*year_', '', avg.prices.regions$Scenario)]
+avg.prices.zones[, Scenario := gsub('.*year_', '', avg.prices.zones$Scenario)]
 hours.high.price[, Scenario := gsub('.*year_', '', hours.high.price$Scenario)]
 cap.factor[, Scenario := gsub('.*year_', '', cap.factor$Scenario)]
 gen.type.percent[, Scenario := gsub('.*year_', '', gen.type.percent$Scenario)]
@@ -39,15 +45,16 @@ reserve.type[, Scenario := gsub('.*year_', '', reserve.type$Scenario)]
 violations[, Scenario := gsub('.*year_', '', violations$Scenario)]
 
 # Filtering out any scenarios which are not listed in the plotting.order object defined above. This can also be used to only show results for some of the runs.
-annual.gen.stats = annual.gen.stats[Scenario %in% plotting.order, ]
-avg.prices = avg.prices[Scenario %in% plotting.order, ]
-avg.zone.price = avg.zone.price[Scenario %in% plotting.order, ]
-hours.high.price = hours.high.price[Scenario %in% plotting.order, ]
-cap.factor = cap.factor[Scenario %in% plotting.order, ]
-gen.type.percent = gen.type.percent[Scenario %in% plotting.order, ]
-reserve.gen.percent = reserve.gen.percent[Scenario %in% plotting.order, ]
-reserve.type = reserve.type[Scenario %in% plotting.order, ]
-violations = violations[Scenario %in% plotting.order, ]
+# Skip for historical AD
+#annual.gen.stats = annual.gen.stats[Scenario %in% plotting.order, ]
+#avg.prices.regions = avg.prices.regions[Scenario %in% plotting.order, ]
+#avg.prices.zones = avg.prices.zones[Scenario %in% plotting.order, ]
+#hours.high.price = hours.high.price[Scenario %in% plotting.order, ]
+#cap.factor = cap.factor[Scenario %in% plotting.order, ]
+#gen.type.percent = gen.type.percent[Scenario %in% plotting.order, ]
+#reserve.gen.percent = reserve.gen.percent[Scenario %in% plotting.order, ]
+#reserve.type = reserve.type[Scenario %in% plotting.order, ]
+#violations = violations[Scenario %in% plotting.order, ]
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Set order for generation types to appear in plots, and the color each generaiton type should be. 
@@ -105,7 +112,7 @@ imports.exports$Scenario = factor(imports.exports$Scenario, levels=plotting.orde
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Rank interval prices for duration curve
-prices = melt(all.price, id.var='time', variable.name='Scenario', value.name='Cost')
+prices = melt(avg.interval.price, id.var='time', variable.name='Scenario', value.name='Cost')
 prices[, interval := rank(-Cost,ties.method="random"), by=Scenario]
 prices[, Scenario := gsub('.*year_', '', prices$Scenario)]
 
